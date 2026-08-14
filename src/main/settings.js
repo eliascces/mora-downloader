@@ -12,6 +12,7 @@ const DEFAULTS = {
   playlistMode: false,
   askFormatWhenHidden: true,
   checkUpdatesOnStart: true,
+  cookieFile: '',
 };
 
 class Settings {

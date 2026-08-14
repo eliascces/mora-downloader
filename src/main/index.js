@@ -6,14 +6,17 @@ const {
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { pathToFileURL } = require('url');
 
 const { Settings } = require('./settings');
 const ClipboardWatcher = require('./clipboard');
 const { Downloader, resourcePath } = require('./downloader');
 const DownloadQueue = require('./queue');
 const { LibraryStore } = require('./library');
-const { checkUpdate } = require('./updater');
+const { checkUpdate, checkAppUpdate } = require('./updater');
+const { Logger } = require('./log');
 const { detectVideoUrl, makeKey, getPlatform } = require('../shared/links');
+const { runWithRetry } = require('../shared/retry');
 
 const LOW_SPACE_BYTES = 100 * 1024 * 1024;
 
@@ -34,6 +37,7 @@ function main() {
   let miniWin = null;
   let playerWin = null;
   let miniCurrent = null;
+  let log = null;
   const miniQueue = [];
   const sessionKeys = new Set();
   const notifiedKeys = new Set();
@@ -60,11 +64,16 @@ function main() {
     return dest;
   }
 
-  function notifyNative(title, body) {
+  function notifyNative(title, body, { openPath, openDir } = {}) {
     const focused = mainWin && !mainWin.isDestroyed() && mainWin.isFocused();
     if (focused) return;
     try {
-      new Notification({ title: `Mora Downloader — ${title}`, body }).show();
+      const n = new Notification({ title: `Mora Downloader — ${title}`, body });
+      n.on('click', () => {
+        if (openPath) shell.showItemInFolder(openPath);
+        else if (openDir) shell.openPath(openDir);
+      });
+      n.show();
     } catch {
       /* ignore */
     }
@@ -114,14 +123,14 @@ function main() {
       url,
       format: fmt,
       playlist: !!playlist,
-      run: () => downloader.download({
+      run: () => runWithRetry(() => downloader.download({
         url,
         format: fmt,
         quality: q,
         playlist: !!playlist,
         outputDir: fmt === 'video' ? path.join(dest, 'Videos') : path.join(dest, 'MP3'),
         onProgress: (p) => broadcast('toast', { kind: 'progress', id, pct: p.pct, speed: p.speed, eta: p.eta }),
-      }),
+      })),
       cancel: () => downloader.cancel(),
     };
 
@@ -133,7 +142,7 @@ function main() {
         broadcast('toast', { kind: 'exists', id, url, file });
       } else {
         broadcast('toast', { kind: 'done', id, url, format: fmt, file, playlist: !!playlist });
-        notifyNative('Descarga completada', `${title || platform} → ${file || fmt.toUpperCase()}`);
+        notifyNative('Descarga completada', `${title || platform} → ${file || fmt.toUpperCase()}`, { openPath: file });
       }
       library.addHistory({ url, platform, format: fmt, path: file, status: res && res.skipped ? 'exists' : 'ok' });
       const items = library.scan(dest);
@@ -142,9 +151,10 @@ function main() {
       sessionKeys.delete(key);
       const code = (err && err.code) || 'ERROR';
       const message = (err && err.message) || 'Error desconocido';
+      if (log) log.error(`descarga fallida code=${code} url=${url}: ${message}`);
       broadcast('toast', { kind: 'error', id, url, code, message });
       library.addHistory({ url, platform, format: fmt, status: 'error', message });
-      notifyNative('Error de descarga', `${code} — ${message}`);
+      notifyNative('Error de descarga', `${code} — ${message}`, { openDir: dest });
     }
   }
 
@@ -286,7 +296,27 @@ function main() {
           watcher.stop();
         }
       }
+      if (key === 'cookieFile') downloader.cookiesFile = value;
       return settings.data;
+    });
+
+    ipcMain.handle('cookies:pick', async () => {
+      const res = await dialog.showOpenDialog(mainWin, {
+        title: 'Selecciona tu archivo de cookies (cookies.txt)',
+        properties: ['openFile'],
+        filters: [{ name: 'Cookies', extensions: ['txt'] }, { name: 'Todos', extensions: ['*'] }],
+      });
+      if (res.canceled || !res.filePaths.length) return null;
+      const file = res.filePaths[0];
+      settings.set('cookieFile', file);
+      downloader.cookiesFile = file;
+      return file;
+    });
+
+    ipcMain.handle('cookies:clear', () => {
+      settings.set('cookieFile', '');
+      downloader.cookiesFile = null;
+      return true;
     });
 
     ipcMain.handle('dialog:pick-folder', async () => {
@@ -331,7 +361,24 @@ function main() {
     ipcMain.handle('library:clear-history', () => library.clearHistory());
     ipcMain.handle('library:playlists', () => library.playlists);
 
-    ipcMain.handle('updater:check', () => checkUpdate(resourcePath('yt-dlp.exe')));
+    ipcMain.handle('library:thumb', async (_e, id) => {
+      const item = library.items.find((i) => i.id === id);
+      if (!item) return null;
+      const thumb = await library.ensureThumbnail(item);
+      return thumb ? pathToFileURL(thumb).href : null;
+    });
+
+    ipcMain.handle('updater:check', async () => {
+      const r = await checkUpdate(resourcePath('yt-dlp.exe'));
+      if (!r.ok && log) log.warn(`checkUpdate: ${r.message}`);
+      return r;
+    });
+
+    ipcMain.handle('app:check-update', () => checkAppUpdate(app.getVersion()));
+    ipcMain.handle('shell:open-external', (_e, url) => {
+      if (typeof url === 'string' && /^https?:\/\//i.test(url)) shell.openExternal(url);
+      return true;
+    });
 
     ipcMain.handle('download:url', (_e, raw) => {
       const url = detectVideoUrl(String(raw || ''));
@@ -384,15 +431,26 @@ function main() {
   app.whenReady().then(async () => {
     settings = new Settings(path.join(app.getPath('userData'), 'settings.json'), { defaultDestination });
     settings.load();
+    log = new Logger(app.getPath('userData'));
+    log.info(`app arrancada (v${app.getVersion()}), settings=${JSON.stringify(settings.data)}`);
+
+    process.on('uncaughtException', (err) => {
+      if (log) log.error(`uncaughtException: ${err && err.stack || err}`);
+    });
+    process.on('unhandledRejection', (reason) => {
+      if (log) log.error(`unhandledRejection: ${reason && reason.stack || reason}`);
+    });
 
     downloader = new Downloader({
       ytDlpPath: resourcePath('yt-dlp.exe'),
       ffmpegPath: resourcePath('ffmpeg.exe'),
       denoPath: resourcePath('deno.exe'),
+      cookiesFile: settings.get('cookieFile'),
     });
     queue = new DownloadQueue();
     library = new LibraryStore(app.getPath('userData'), {
       ffprobePath: resourcePath('ffprobe.exe'),
+      ffmpegPath: resourcePath('ffmpeg.exe'),
     });
     watcher = new ClipboardWatcher({ onLink: handleLink });
 
@@ -409,6 +467,10 @@ function main() {
       setTimeout(async () => {
         const r = await checkUpdate(resourcePath('yt-dlp.exe'));
         broadcast('toast', { key: 'updateCheck', ok: r.ok, message: r.message });
+        const ar = await checkAppUpdate(app.getVersion());
+        if (ar.ok && ar.hasUpdate) {
+          broadcast('toast', { key: 'appUpdate', version: ar.latest, url: ar.url });
+        }
       }, 2500);
     }
   });

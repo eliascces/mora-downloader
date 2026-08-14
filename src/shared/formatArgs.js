@@ -11,7 +11,7 @@ function outputSubdir(format) {
   return format === 'video' ? 'Videos' : 'MP3';
 }
 
-function buildArgs({ url, format, quality, ffmpegPath, outputDir, playlist, denoPath }) {
+function buildArgs({ url, format, quality, ffmpegPath, outputDir, playlist, denoPath, cookiesFile }) {
   const args = [];
   if (format === 'video') {
     const filter = QUALITY_FILTERS[quality] || QUALITY_FILTERS.best;
@@ -23,6 +23,9 @@ function buildArgs({ url, format, quality, ffmpegPath, outputDir, playlist, deno
   args.push(playlist ? '--yes-playlist' : '--no-playlist');
   if (denoPath) {
     args.push('--js-runtimes', `deno:${denoPath}`);
+  }
+  if (cookiesFile) {
+    args.push('--cookies', cookiesFile);
   }
   args.push(
     '--no-overwrites',

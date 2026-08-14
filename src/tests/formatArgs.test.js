@@ -72,6 +72,17 @@ test('sin denoPath no añade --js-runtimes', () => {
   assert.ok(!args.includes('--js-runtimes'));
 });
 
+test('cookiesFile añade --cookies <ruta>', () => {
+  const args = buildArgs({ ...BASE, cookiesFile: 'C:/u/cookies.txt' });
+  assert.ok(args.includes('--cookies'));
+  assert.ok(args.includes('C:/u/cookies.txt'));
+});
+
+test('sin cookiesFile no añade --cookies', () => {
+  const args = buildArgs(BASE);
+  assert.ok(!args.includes('--cookies'));
+});
+
 test('outputSubdir', () => {
   assert.equal(outputSubdir('mp3'), 'MP3');
   assert.equal(outputSubdir('video'), 'Videos');

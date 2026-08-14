@@ -45,7 +45,10 @@ function seedWithFfmpeg(dest) {
   fs.rmSync(TMP, { recursive: true, force: true });
   const dest = path.join(TMP, 'dest');
   const d = new Downloader({ ytDlpPath: resourcePath('yt-dlp.exe'), ffmpegPath: resourcePath('ffmpeg.exe') });
-  const lib = new LibraryStore(userData, { ffprobePath: resourcePath('ffprobe.exe') });
+  const lib = new LibraryStore(userData, {
+  ffprobePath: resourcePath('ffprobe.exe'),
+  ffmpegPath: resourcePath('ffmpeg.exe'),
+});
 
   ok(fs.existsSync(resourcePath('yt-dlp.exe')), 'binarios presentes (dev path)');
 
@@ -105,6 +108,11 @@ function seedWithFfmpeg(dest) {
   const items = lib.scan(dest);
   ok(items.length >= 2, `lib.scan encuentra ${items.length} item(s)`);
   ok(items.some((i) => i.format === 'audio') && items.some((i) => i.format === 'video'), 'items incluyen audio y video');
+
+  // 4b) miniatura generada con ffmpeg
+  const videoItem = items.find((i) => i.format === 'video');
+  const thumb = await lib.ensureThumbnail(videoItem);
+  ok(!!thumb && fs.existsSync(thumb), `miniatura generada: ${thumb ? path.basename(thumb) : 'null'}`);
 
   // 5) libre espacio
   ok(typeof lib.freeSpace(dest) === 'number', 'freeSpace devuelve número');

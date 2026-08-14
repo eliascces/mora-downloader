@@ -30,9 +30,11 @@ function idOf(text) {
 }
 
 class LibraryStore {
-  constructor(dir, { ffprobePath = null } = {}) {
+  constructor(dir, { ffprobePath = null, ffmpegPath = null } = {}) {
     this.dir = dir;
     this.ffprobePath = ffprobePath;
+    this.ffmpegPath = ffmpegPath;
+    this.thumbsDir = path.join(dir, 'thumbs');
     this.libraryFile = path.join(dir, 'library.json');
     this.favoritesFile = path.join(dir, 'favorites.json');
     this.playlistsFile = path.join(dir, 'playlists.json');
@@ -147,6 +149,33 @@ class LibraryStore {
       proc.on('close', () => {
         const dur = parseFloat(out.trim());
         resolve(Number.isFinite(dur) ? dur : null);
+      });
+    });
+  }
+
+  ensureThumbnail(item) {
+    return new Promise((resolve) => {
+      fs.mkdirSync(this.thumbsDir, { recursive: true });
+      const thumb = path.join(this.thumbsDir, `${item.id}.jpg`);
+      if (fs.existsSync(thumb)) return resolve(thumb);
+      if (!item.path || !fs.existsSync(item.path)) return resolve(null);
+      if (!this.ffmpegPath) return resolve(null);
+      const args = item.format === 'video'
+        ? ['-y', '-loglevel', 'error', '-ss', '3', '-i', item.path, '-frames:v', '1', '-vf', 'scale=160:-2', thumb]
+        : ['-y', '-loglevel', 'error', '-i', item.path, '-an', '-map', '0:v?', '-frames:v', '1', thumb];
+      let proc;
+      try {
+        proc = spawn(this.ffmpegPath, args, { windowsHide: true });
+      } catch {
+        return resolve(null);
+      }
+      const timer = setTimeout(() => {
+        try { proc.kill(); } catch {}
+      }, 15000);
+      proc.on('error', () => { clearTimeout(timer); resolve(null); });
+      proc.on('close', () => {
+        clearTimeout(timer);
+        resolve(fs.existsSync(thumb) ? thumb : null);
       });
     });
   }

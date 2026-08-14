@@ -26,10 +26,11 @@ function resourcePath(filename) {
 }
 
 class Downloader {
-  constructor({ ytDlpPath, ffmpegPath, denoPath }) {
+  constructor({ ytDlpPath, ffmpegPath, denoPath, cookiesFile }) {
     this.ytDlpPath = ytDlpPath;
     this.ffmpegPath = ffmpegPath;
     this.denoPath = denoPath && exists(denoPath) ? denoPath : null;
+    this.cookiesFile = cookiesFile && exists(cookiesFile) ? cookiesFile : null;
   }
 
   download(job) {
@@ -43,6 +44,7 @@ class Downloader {
       ffmpegPath: this.ffmpegPath,
       outputDir,
       denoPath: this.denoPath,
+      cookiesFile: this.cookiesFile,
     });
 
     return new Promise((resolve, reject) => {
@@ -82,6 +84,9 @@ class Downloader {
       const baseArgs = ['--print', '%(title)s', '--no-playlist', '--skip-download', '--socket-timeout', '5'];
       if (this.denoPath) {
         baseArgs.push('--js-runtimes', `deno:${this.denoPath}`);
+      }
+      if (this.cookiesFile) {
+        baseArgs.push('--cookies', this.cookiesFile);
       }
       baseArgs.push(url);
       let proc;

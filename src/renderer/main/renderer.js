@@ -22,12 +22,17 @@ const els = {
   qualityRow: $('#qualityRow'),
   quality: $('#quality'),
   playlistMode: $('#playlistMode'),
+  askFormatSetting: $('#askFormatSetting'),
+  cookiePath: $('#cookiePath'),
+  btnPickCookies: $('#btnPickCookies'),
+  btnClearCookies: $('#btnClearCookies'),
   folderPath: $('#folderPath'),
   btnPick: $('#btnPick'),
   btnNew: $('#btnNew'),
   btnOpen: $('#btnOpen'),
   spaceInfo: $('#spaceInfo'),
   btnUpdate: $('#btnUpdate'),
+  btnCheckApp: $('#btnCheckApp'),
   btnCancel: $('#btnCancel'),
   btnManualToggle: $('#btnManualToggle'),
   manualUrl: $('#manualUrl'),
@@ -130,7 +135,20 @@ async function refreshSettings() {
   els.qualityRow.classList.toggle('hidden', fmt !== 'video');
   els.quality.value = state.settings.videoQuality || '1080';
   els.playlistMode.checked = !!state.settings.playlistMode;
+  els.askFormatSetting.checked = state.settings.askFormatWhenHidden !== false;
   await refreshFolder();
+  renderCookies();
+}
+
+function renderCookies() {
+  const file = state.settings.cookieFile || '';
+  els.cookiePath.textContent = file ? pathName(file) : t('noCookies');
+  els.cookiePath.classList.toggle('empty', !file);
+}
+
+function pathName(p) {
+  const parts = String(p).split(/[\\/]/);
+  return parts[parts.length - 1] || p;
 }
 
 async function refreshFolder() {
@@ -311,6 +329,23 @@ els.playlistMode.addEventListener('change', async () => {
   state.settings = await api.invoke('settings:set', 'playlistMode', els.playlistMode.checked);
 });
 
+els.askFormatSetting.addEventListener('change', async () => {
+  state.settings = await api.invoke('settings:set', 'askFormatWhenHidden', els.askFormatSetting.checked);
+});
+
+els.btnPickCookies.addEventListener('click', async () => {
+  const file = await api.invoke('cookies:pick');
+  if (file) {
+    state.settings = { ...state.settings, cookieFile: file };
+    renderCookies();
+  }
+});
+els.btnClearCookies.addEventListener('click', async () => {
+  await api.invoke('cookies:clear');
+  state.settings = { ...state.settings, cookieFile: '' };
+  renderCookies();
+});
+
 els.btnPick.addEventListener('click', async () => {
   const dir = await api.invoke('dialog:pick-folder');
   if (dir) await refreshFolder();
@@ -326,6 +361,22 @@ els.btnUpdate.addEventListener('click', async () => {
   const r = await api.invoke('updater:check');
   showInfoToast('tUpdateResult', { message: r.message || '' }, 9000);
   els.btnUpdate.disabled = false;
+});
+
+els.btnCheckApp.addEventListener('click', async () => {
+  els.btnCheckApp.disabled = true;
+  const r = await api.invoke('app:check-update');
+  if (r && r.ok) {
+    if (r.hasUpdate) {
+      showInfoToast('tAppUpdate', { version: r.latest }, 0);
+      api.invoke('shell:open-external', r.url);
+    } else {
+      showInfoToast('tAppUpToDate', {}, 6000);
+    }
+  } else {
+    showInfoToast('tAppUpdateFail', {}, 6000);
+  }
+  els.btnCheckApp.disabled = false;
 });
 
 els.btnCancel.addEventListener('click', () => api.invoke('download:cancel'));
@@ -436,6 +487,7 @@ function renderLibrary() {
     const sub = item.format === 'audio' ? t('libSubAudio', { size: fmtBytes(item.size), duration: fmtDuration(item.duration) }) : t('libSubVideo', { size: fmtBytes(item.size), duration: fmtDuration(item.duration) });
     li.innerHTML = `
       <span class="icon ${item.format}">${item.format === 'audio' ? '♪' : '🎬'}</span>
+      <img class="thumb" data-slot="${item.id}" alt="" hidden>
       <div class="lib-meta"><div class="lib-name">${esc(item.name)}</div><div class="lib-sub">${esc(item.format === 'audio' ? 'MP3' : 'MP4')} · ${sub}</div></div>
       <button class="icon-btn star ${fav ? 'starred' : ''}" title="⭐">${fav ? '★' : '☆'}</button>
       <button class="icon-btn pl-add" title="+">＋</button>
@@ -462,7 +514,18 @@ function renderLibrary() {
     });
     li.addEventListener('dblclick', () => playFrom(items, item.id));
     els.libList.appendChild(li);
+    loadThumb(li, item.id);
   }
+}
+
+function loadThumb(li, id) {
+  api.invoke('library:thumb', id).then((src) => {
+    if (!src || !li.isConnected) return;
+    const img = li.querySelector('.thumb');
+    if (!img) return;
+    img.src = src;
+    img.onload = () => { img.hidden = false; };
+  }).catch(() => {});
 }
 
 async function promptPlaylistChoice() {
