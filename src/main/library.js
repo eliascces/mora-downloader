@@ -160,23 +160,32 @@ class LibraryStore {
       if (fs.existsSync(thumb)) return resolve(thumb);
       if (!item.path || !fs.existsSync(item.path)) return resolve(null);
       if (!this.ffmpegPath) return resolve(null);
-      const args = item.format === 'video'
-        ? ['-y', '-loglevel', 'error', '-ss', '3', '-i', item.path, '-frames:v', '1', '-vf', 'scale=160:-2', thumb]
+      const base = item.format === 'video'
+        ? ['-y', '-loglevel', 'error', '-i', item.path, '-frames:v', '1', '-vf', 'scale=160:-2', thumb]
         : ['-y', '-loglevel', 'error', '-i', item.path, '-an', '-map', '0:v?', '-frames:v', '1', thumb];
-      let proc;
-      try {
-        proc = spawn(this.ffmpegPath, args, { windowsHide: true });
-      } catch {
-        return resolve(null);
-      }
-      const timer = setTimeout(() => {
-        try { proc.kill(); } catch {}
-      }, 15000);
-      proc.on('error', () => { clearTimeout(timer); resolve(null); });
-      proc.on('close', () => {
-        clearTimeout(timer);
-        resolve(fs.existsSync(thumb) ? thumb : null);
-      });
+      const attempts = item.format === 'video'
+        ? [['-ss', '1', ...base], base]
+        : [base];
+      const run = (i) => {
+        const args = attempts[i];
+        let proc;
+        try {
+          proc = spawn(this.ffmpegPath, args, { windowsHide: true });
+        } catch {
+          return resolve(null);
+        }
+        const timer = setTimeout(() => {
+          try { proc.kill(); } catch {}
+        }, 15000);
+        proc.on('error', () => { clearTimeout(timer); resolve(null); });
+        proc.on('close', () => {
+          clearTimeout(timer);
+          if (fs.existsSync(thumb)) return resolve(thumb);
+          if (i + 1 < attempts.length) return run(i + 1);
+          resolve(null);
+        });
+      };
+      run(0);
     });
   }
 
