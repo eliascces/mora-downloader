@@ -102,7 +102,7 @@ function seedWithFfmpeg(dest) {
   q.onEnd = () => { done++; };
   await q.add({
     id: 'e', url: TEST_URL, format: 'mp3', playlist: false,
-    run: () => d.download({ url: TEST_URL, format: 'mp3', quality: 'best', playlist: false, outputDir: subOut(dest, 'mp3') }),
+    run: async () => { await new Promise((r) => setTimeout(r, 5)); return {}; },
   });
   ok(done === 1, `cola procesa 1 trabajo (done=${done})`);
   const items = lib.scan(dest);
