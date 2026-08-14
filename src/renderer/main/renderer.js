@@ -30,6 +30,8 @@ const els = {
   btnUpdate: $('#btnUpdate'),
   btnCancel: $('#btnCancel'),
   btnManualToggle: $('#btnManualToggle'),
+  manualUrl: $('#manualUrl'),
+  btnManualDownload: $('#btnManualDownload'),
   manualBody: $('#manualBody'),
   historyList: $('#historyList'),
   libSearch: $('#libSearch'),
@@ -208,7 +210,11 @@ function renderToast(id) {
   else if (d.playlist) text = t('tPlaylistModeOn');
   else if (d.format === 'video') text = `${t('tMerging')} ${d.pct != null ? Math.round(d.pct) + '%' : ''}`;
   else if (d.pct != null && d.pct >= 100) text = `${t('tConverting')} …`;
-  else text = `${t('tDownloading')} ${d.pct != null ? Math.round(d.pct) + '%' : ''}`;
+  else {
+    text = `${t('tDownloading')} ${d.pct != null ? Math.round(d.pct) + '%' : ''}`;
+    const meta = [d.speed, d.eta].filter(Boolean);
+    if (meta.length) text += ` · ${meta.join(' · ')}`;
+  }
   sub.textContent = text.trim();
   sub.className = `toast-sub ${status === 'ok' ? 'ok' : status === 'error' ? 'err' : ''}`;
 }
@@ -245,7 +251,12 @@ function handleToast(msg) {
         if (state.toasts[id]) { state.toasts[id].__data.title = msg.title; renderToast(id); }
         break;
       case 'progress':
-        if (state.toasts[id]) { state.toasts[id].__data.pct = msg.pct; renderToast(id); }
+        if (state.toasts[id]) {
+          state.toasts[id].__data.pct = msg.pct;
+          state.toasts[id].__data.speed = msg.speed;
+          state.toasts[id].__data.eta = msg.eta;
+          renderToast(id);
+        }
         break;
       case 'done':
         upsertToast(id, { status: 'done', format: msg.format });
@@ -318,6 +329,21 @@ els.btnUpdate.addEventListener('click', async () => {
 });
 
 els.btnCancel.addEventListener('click', () => api.invoke('download:cancel'));
+
+async function manualDownload() {
+  const raw = els.manualUrl.value.trim();
+  if (!raw) return;
+  const r = await api.invoke('download:url', raw);
+  if (r && r.ok) {
+    els.manualUrl.value = '';
+  } else {
+    showInfoToast('tInvalidUrl', {}, 4000);
+  }
+}
+els.btnManualDownload.addEventListener('click', manualDownload);
+els.manualUrl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') manualDownload();
+});
 
 // ---- Tabs ----
 

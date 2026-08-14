@@ -44,7 +44,7 @@ function subOut(dir, format) {
   ok(upd.ok !== undefined, `checkUpdate: ok=${upd.ok} msg="${upd.message.slice(0, 60)}"`);
 
   // 3) descarga MP3 real
-  await d.download({ url: TEST_URL, format: 'mp3', quality: 'best', playlist: false, outputDir: subOut(dest, 'mp3'), onProgress: (p) => { if (p % 50 === 0) console.log(`   ...mp3 ${p}%`); } });
+  await d.download({ url: TEST_URL, format: 'mp3', quality: 'best', playlist: false, outputDir: subOut(dest, 'mp3'), onProgress: (p) => { if (p.pct % 50 === 0) console.log(`   ...mp3 ${p.pct}%`); } });
   const mp3Files = fs.existsSync(path.join(dest, 'MP3')) ? fs.readdirSync(path.join(dest, 'MP3')) : [];
   ok(mp3Files.length > 0, `MP3 descargado: ${mp3Files.length} archivo(s) -> ${mp3Files.join(', ')}`);
 

@@ -120,7 +120,7 @@ function main() {
         quality: q,
         playlist: !!playlist,
         outputDir: fmt === 'video' ? path.join(dest, 'Videos') : path.join(dest, 'MP3'),
-        onProgress: (pct) => broadcast('toast', { kind: 'progress', id, pct }),
+        onProgress: (p) => broadcast('toast', { kind: 'progress', id, pct: p.pct, speed: p.speed, eta: p.eta }),
       }),
       cancel: () => downloader.cancel(),
     };
@@ -139,6 +139,7 @@ function main() {
       const items = library.scan(dest);
       broadcast('library:updated', items);
     } catch (err) {
+      sessionKeys.delete(key);
       const code = (err && err.code) || 'ERROR';
       const message = (err && err.message) || 'Error desconocido';
       broadcast('toast', { kind: 'error', id, url, code, message });
@@ -387,6 +388,7 @@ function main() {
     downloader = new Downloader({
       ytDlpPath: resourcePath('yt-dlp.exe'),
       ffmpegPath: resourcePath('ffmpeg.exe'),
+      denoPath: resourcePath('deno.exe'),
     });
     queue = new DownloadQueue();
     library = new LibraryStore(app.getPath('userData'), {

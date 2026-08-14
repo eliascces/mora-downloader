@@ -61,6 +61,17 @@ test('último arg es la URL', () => {
   assert.equal(args[args.length - 1], BASE.url);
 });
 
+test('denoPath añade --js-runtimes deno:<path>', () => {
+  const args = buildArgs({ ...BASE, denoPath: 'C:/rt/deno.exe' });
+  assert.ok(args.includes('--js-runtimes'));
+  assert.ok(args.includes('deno:C:/rt/deno.exe'));
+});
+
+test('sin denoPath no añade --js-runtimes', () => {
+  const args = buildArgs(BASE);
+  assert.ok(!args.includes('--js-runtimes'));
+});
+
 test('outputSubdir', () => {
   assert.equal(outputSubdir('mp3'), 'MP3');
   assert.equal(outputSubdir('video'), 'Videos');

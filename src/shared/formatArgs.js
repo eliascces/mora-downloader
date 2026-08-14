@@ -11,7 +11,7 @@ function outputSubdir(format) {
   return format === 'video' ? 'Videos' : 'MP3';
 }
 
-function buildArgs({ url, format, quality, ffmpegPath, outputDir, playlist }) {
+function buildArgs({ url, format, quality, ffmpegPath, outputDir, playlist, denoPath }) {
   const args = [];
   if (format === 'video') {
     const filter = QUALITY_FILTERS[quality] || QUALITY_FILTERS.best;
@@ -21,6 +21,9 @@ function buildArgs({ url, format, quality, ffmpegPath, outputDir, playlist }) {
     args.push('-x', '--audio-format', 'mp3', '--audio-quality', '0');
   }
   args.push(playlist ? '--yes-playlist' : '--no-playlist');
+  if (denoPath) {
+    args.push('--js-runtimes', `deno:${denoPath}`);
+  }
   args.push(
     '--no-overwrites',
     '--no-mtime',

@@ -4,7 +4,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const PROGRESS_RE = /^\[download\]\s+(\d+(?:\.\d+)?)%/;
+const PROGRESS_RE = /^\[download\]\s+(\d+(?:\.\d+)?)%(?:\s+of\s+([\d.]+\s?[A-Za-z]+))?(?:\s+at\s+(\S+?)\s+ETA\s+(\S+))?/;
 
 function exists(p) {
   try {
@@ -26,9 +26,10 @@ function resourcePath(filename) {
 }
 
 class Downloader {
-  constructor({ ytDlpPath, ffmpegPath }) {
+  constructor({ ytDlpPath, ffmpegPath, denoPath }) {
     this.ytDlpPath = ytDlpPath;
     this.ffmpegPath = ffmpegPath;
+    this.denoPath = denoPath && exists(denoPath) ? denoPath : null;
   }
 
   download(job) {
@@ -41,6 +42,7 @@ class Downloader {
       playlist,
       ffmpegPath: this.ffmpegPath,
       outputDir,
+      denoPath: this.denoPath,
     });
 
     return new Promise((resolve, reject) => {
@@ -77,13 +79,14 @@ class Downloader {
 
   getTitle(url, timeoutMs = 6000) {
     return new Promise((resolve) => {
+      const baseArgs = ['--print', '%(title)s', '--no-playlist', '--skip-download', '--socket-timeout', '5'];
+      if (this.denoPath) {
+        baseArgs.push('--js-runtimes', `deno:${this.denoPath}`);
+      }
+      baseArgs.push(url);
       let proc;
       try {
-        proc = spawn(
-          this.ytDlpPath,
-          ['--print', '%(title)s', '--no-playlist', '--skip-download', '--socket-timeout', '5', url],
-          { windowsHide: true },
-        );
+        proc = spawn(this.ytDlpPath, baseArgs, { windowsHide: true });
       } catch {
         return resolve(null);
       }
@@ -113,7 +116,7 @@ function parseProgress(buffer, cb) {
   const lines = buffer.split(/\r?\n/);
   for (const line of lines.slice(-3)) {
     const m = line.match(PROGRESS_RE);
-    if (m) cb(parseFloat(m[1]));
+    if (m) cb({ pct: parseFloat(m[1]), size: m[2] || null, speed: m[3] || null, eta: m[4] || null });
   }
 }
 
