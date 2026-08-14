@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src file:; script-src 'self'">
+  <title>Reproductor</title>
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <div class="layout">
+    <div class="video-area">
+      <video id="video" controls autoplay></video>
+      <div class="empty" id="empty">Mora Downloader — Reproductor</div>
+    </div>
+    <aside class="queue">
+      <div class="queue-head">
+        <h3 id="queueTitle">Cola</h3>
+        <span id="nowName" class="now-name">—</span>
+      </div>
+      <ul class="queue-list" id="queueList"></ul>
+    </aside>
+  </div>
+  <script src="../i18n.js"></script>
+  <script src="player.js"></script>
+</body>
+</html>

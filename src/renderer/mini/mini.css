@@ -1,0 +1,63 @@
+:root {
+  --bg: #12141c;
+  --card: #1c1f2c;
+  --border: #262a3a;
+  --text: #e6e8f0;
+  --muted: #8a90a3;
+  --accent1: #2b3af5;
+  --accent2: #8b5cf6;
+  --green: #34d399;
+  --red: #f87171;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  border: 1px solid #2f3450;
+  border-radius: 14px;
+  -webkit-app-region: drag;
+}
+
+.mini-root { display: flex; flex-direction: column; height: 100%; padding: 12px; gap: 10px; }
+
+.mini-header { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+
+.mini-body { flex: 1; display: flex; flex-direction: column; gap: 5px; min-height: 0; }
+.badge {
+  align-self: flex-start; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  background: linear-gradient(135deg, rgba(43,58,245,.25), rgba(139,92,246,.25));
+  color: #c4b5fd; padding: 2px 9px; border-radius: 999px;
+}
+.mini-url { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-vtitle { font-size: 13px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mini-count { font-size: 11px; color: var(--accent2); min-height: 14px; }
+
+.mini-buttons { display: flex; gap: 8px; }
+.opt {
+  -webkit-app-region: no-drag;
+  flex: 1; border: 0; border-radius: 10px; padding: 10px 0; font-size: 13px; font-weight: 700;
+  cursor: pointer; color: #fff;
+}
+.opt.mp3 { background: linear-gradient(135deg, var(--accent1), #3b82f6); }
+.opt.video { background: linear-gradient(135deg, #9333ea, var(--accent2)); }
+.opt.ignore { flex: 0 0 44px; background: var(--card); color: var(--muted); border: 1px solid var(--border); font-size: 14px; }
+.opt:hover { filter: brightness(1.12); }
+.opt:active { transform: scale(.97); }
+.opt.hl { box-shadow: 0 0 0 2px #fff inset; }
+
+.mini-progress { display: flex; align-items: center; gap: 10px; }
+.ring-wrap { position: relative; width: 40px; height: 40px; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: #2a2e40; stroke-width: 4; }
+.ring-fg { fill: none; stroke: var(--accent2); stroke-width: 4; stroke-linecap: round; }
+.pstatus { font-size: 12px; color: var(--muted); }
+.pstatus.ok { color: var(--green); }
+.pstatus.err { color: var(--red); }
+
+.hidden { display: none !important; }

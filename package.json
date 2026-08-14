@@ -1,0 +1,23 @@
+{
+  "name": "mora-downloader",
+  "productName": "Mora Downloader",
+  "version": "1.0.0",
+  "description": "Descarga audio (MP3) y video (MP4) desde el portapapeles en YouTube, Facebook y otras plataformas.",
+  "main": "src/main/index.js",
+  "author": "Mora",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "setup:binaries": "powershell -ExecutionPolicy Bypass -File scripts/download-binaries.ps1",
+    "icons": "node scripts/generate-icons.js",
+    "test": "node --test \"src/tests/*.test.js\"",
+    "dist": "node scripts/generate-icons.js && electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^43.4.0",
+    "electron-builder": "^26.15.3",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.3"
+  }
+}

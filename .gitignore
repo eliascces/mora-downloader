@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+assets/resources/
+assets/icon.ico
+assets/icon.png
+assets/icon-*.png
+*.log

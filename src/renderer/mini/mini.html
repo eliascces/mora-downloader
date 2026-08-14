@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Mora Downloader</title>
+  <link rel="stylesheet" href="mini.css">
+</head>
+<body>
+  <div class="mini-root">
+    <header class="mini-header">
+      <svg viewBox="0 0 512 512" width="26" height="26" aria-hidden="true">
+        <defs>
+          <linearGradient id="mbg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2b3af5"/>
+            <stop offset="100%" stop-color="#8b5cf6"/>
+          </linearGradient>
+        </defs>
+        <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#mbg)"/>
+        <rect x="120" y="150" width="20" height="80" rx="10" fill="#fff" opacity="0.55"/>
+        <rect x="166" y="120" width="20" height="140" rx="10" fill="#fff" opacity="0.75"/>
+        <rect x="212" y="95" width="20" height="190" rx="10" fill="#fff"/>
+        <rect x="258" y="120" width="20" height="140" rx="10" fill="#fff" opacity="0.75"/>
+        <rect x="304" y="150" width="20" height="80" rx="10" fill="#fff" opacity="0.55"/>
+        <path d="M256 130 v150" stroke="#fff" stroke-width="38" stroke-linecap="round"/>
+        <path d="M200 244 l56 58 56-58" stroke="#fff" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <span id="miniTitle">Nuevo enlace detectado</span>
+    </header>
+
+    <div class="mini-body">
+      <span class="badge" id="platform">—</span>
+      <div class="mini-url" id="url" title=""></div>
+      <div class="mini-vtitle" id="vtitle">…</div>
+      <div class="mini-count" id="countdown"></div>
+    </div>
+
+    <div class="mini-buttons" id="buttons">
+      <button id="btnMp3" class="opt mp3">🎵 MP3</button>
+      <button id="btnVideo" class="opt video">🎬 Video</button>
+      <button id="btnIgnore" class="opt ignore">✕</button>
+    </div>
+
+    <div class="mini-progress hidden" id="progress">
+      <div class="ring-wrap" id="ringWrap"></div>
+      <div class="pstatus" id="pstatus">Descargando…</div>
+    </div>
+  </div>
+  <script src="../i18n.js"></script>
+  <script src="mini.js"></script>
+</body>
+</html>

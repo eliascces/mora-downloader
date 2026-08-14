@@ -1,0 +1,22 @@
+appId: com.mora.downloader
+productName: Mora Downloader
+directories:
+  output: dist
+  buildResources: build
+files:
+  - src/**
+  - package.json
+extraResources:
+  - from: assets/resources
+    to: resources
+    filter:
+      - "**/*"
+win:
+  icon: assets/icon.ico
+  target:
+    - target: portable
+      arch:
+        - x64
+portable:
+  artifactName: "MoraDownloader-${version}.exe"
+npmRebuild: false

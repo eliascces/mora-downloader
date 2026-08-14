@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Mora Downloader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo">
+      <svg viewBox="0 0 512 512" width="38" height="38" aria-hidden="true">
+        <defs>
+          <linearGradient id="hbg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2b3af5"/>
+            <stop offset="100%" stop-color="#8b5cf6"/>
+          </linearGradient>
+        </defs>
+        <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#hbg)"/>
+        <rect x="120" y="150" width="20" height="80" rx="10" fill="#fff" opacity="0.55"/>
+        <rect x="166" y="120" width="20" height="140" rx="10" fill="#fff" opacity="0.75"/>
+        <rect x="212" y="95" width="20" height="190" rx="10" fill="#fff"/>
+        <rect x="258" y="120" width="20" height="140" rx="10" fill="#fff" opacity="0.75"/>
+        <rect x="304" y="150" width="20" height="80" rx="10" fill="#fff" opacity="0.55"/>
+        <path d="M256 130 v150" stroke="#fff" stroke-width="38" stroke-linecap="round"/>
+        <path d="M200 244 l56 58 56-58" stroke="#fff" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M198 366 a60 60 0 0 0 116 0" stroke="#fff" stroke-width="20" stroke-linecap="round" fill="none" opacity="0.92"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <h1>Mora Downloader</h1>
+      <span class="version" id="version">v1.0.0</span>
+    </div>
+    <div class="lang-switch" role="group" aria-label="Idioma">
+      <button data-lang="es" class="active">ES</button>
+      <button data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card onoff-card">
+      <div class="onoff-row">
+        <div class="onoff-text">
+          <h2 data-i18n="monitoringTitle">Vigilancia del portapapeles</h2>
+          <p class="status" id="statusText"></p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle" aria-label="On/Off">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="formatTitle">Formato por defecto</h2>
+      <div class="seg" id="formatSeg">
+        <button data-format="mp3" class="active">MP3</button>
+        <button data-format="video">MP4</button>
+      </div>
+      <div class="quality-row hidden" id="qualityRow">
+        <label data-i18n="qualityLabel">Calidad de video</label>
+        <select id="quality">
+          <option value="best" data-i18n="qbest">Mejor calidad</option>
+          <option value="1080" data-i18n="q1080">1080p</option>
+          <option value="720" data-i18n="q720">720p</option>
+          <option value="480" data-i18n="q480">480p</option>
+        </select>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" id="playlistMode">
+        <span data-i18n="playlistMode">Descargar playlists completas</span>
+      </label>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="folderTitle">Carpeta de destino</h2>
+      <div class="folder-path" id="folderPath" title=""></div>
+      <div class="row-buttons">
+        <button id="btnPick" data-i18n="btnPickFolder">Seleccionar carpeta</button>
+        <button id="btnNew" data-i18n="btnNewFolder">Nueva carpeta</button>
+        <button id="btnOpen" data-i18n="btnOpenFolder">Abrir</button>
+      </div>
+      <div class="space" id="spaceInfo"></div>
+    </section>
+
+    <section class="card actions-card">
+      <button id="btnUpdate" class="ghost" data-i18n="btnUpdate">Buscar actualizaciones de yt-dlp</button>
+      <button id="btnCancel" class="ghost danger hidden">Cancelar descarga</button>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button data-tab="downloads" class="active" data-i18n="tabDownloads">Descargas</button>
+      <button data-tab="library" data-i18n="tabLibrary">Biblioteca</button>
+      <button data-tab="playlists" data-i18n="tabPlaylists">Playlists</button>
+    </nav>
+
+    <section id="tab-downloads" class="tab active">
+      <button id="btnManualToggle" class="manual-toggle" data-i18n="manualToggle">Manual (breve)</button>
+      <div id="manualBody" class="manual-body hidden">
+        <ol>
+          <li data-i18n="manualStep1">1. Copia el enlace de cualquier video</li>
+          <li data-i18n="manualStep2">2. Con el interruptor activo se detecta y elige MP3 o Video</li>
+          <li data-i18n="manualStep3">3. Se guarda en MP3/ o Videos/ dentro de la carpeta destino</li>
+          <li data-i18n="manualStep4">4. Playlists solo si activas el modo playlist</li>
+          <li data-i18n="manualStep5">5. Privados/restringidos no se pueden descargar</li>
+        </ol>
+      </div>
+      <h3 class="sub-title" data-i18n="historyTitle">Historial</h3>
+      <ul class="list" id="historyList"></ul>
+    </section>
+
+    <section id="tab-library" class="tab">
+      <div class="lib-toolbar">
+        <input type="search" id="libSearch" data-i18n-ph="searchPlaceholder" placeholder="Buscar…">
+        <label class="check-row compact">
+          <input type="checkbox" id="favFilter">
+          <span data-i18n="onlyFavs">Solo favoritos</span>
+        </label>
+      </div>
+      <ul class="list lib-list" id="libList"></ul>
+      <div class="row-buttons lib-actions">
+        <button id="btnRefresh" class="ghost" data-i18n="refreshLibrary">Actualizar biblioteca</button>
+        <button id="btnPlayFavs" class="ghost" data-i18n="playFavorites">Reproducir favoritos</button>
+      </div>
+    </section>
+
+    <section id="tab-playlists" class="tab">
+      <div class="pl-new">
+        <input id="plName" data-i18n-ph="plNewPlaceholder" placeholder="Nueva playlist…">
+        <button id="btnCreatePl" data-i18n="btnCreate">Crear</button>
+      </div>
+      <div id="plDetail" class="hidden">
+        <div class="pl-detail-head">
+          <button id="btnBackPl" class="ghost">←</button>
+          <h3 id="plDetailName"></h3>
+          <button id="btnPlayPl" class="ghost" data-i18n="btnPlay">Reproducir</button>
+        </div>
+        <ul class="list" id="plDetailList"></ul>
+      </div>
+      <ul class="list" id="plList"></ul>
+    </section>
+  </main>
+
+  <footer class="mini-player hidden" id="miniPlayer">
+    <div class="mp-info">
+      <span class="mp-icon">♪</span>
+      <div class="mp-meta">
+        <div class="mp-name" id="mpName">—</div>
+        <div class="mp-time" id="mpTime">0:00 / 0:00</div>
+      </div>
+    </div>
+    <div class="mp-controls">
+      <button id="mpPrev" class="mp-btn">⏮</button>
+      <button id="mpToggle" class="mp-btn big">▶</button>
+      <button id="mpNext" class="mp-btn">⏭</button>
+    </div>
+    <input type="range" id="mpSeek" min="0" max="1000" value="0" class="mp-seek">
+    <div class="mp-vol">
+      <span>🔊</span>
+      <input type="range" id="mpVol" min="0" max="100" value="80">
+    </div>
+  </footer>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <audio id="audio" hidden preload="metadata"></audio>
+
+  <script src="../i18n.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
