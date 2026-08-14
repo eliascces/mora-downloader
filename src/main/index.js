@@ -119,7 +119,7 @@ function main() {
         format: fmt,
         quality: q,
         playlist: !!playlist,
-        outputDir: dest,
+        outputDir: fmt === 'video' ? path.join(dest, 'Videos') : path.join(dest, 'MP3'),
         onProgress: (pct) => broadcast('toast', { kind: 'progress', id, pct }),
       }),
       cancel: () => downloader.cancel(),
