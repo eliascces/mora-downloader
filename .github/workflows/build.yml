@@ -39,15 +39,19 @@ jobs:
       - run: npm ci
       - name: Descargar binarios
         run: npm run setup:binaries
-      - name: Compilar .exe portable
+      - name: Compilar portable + instalador
         run: npm run dist
-      - name: Subir artefacto
+      - name: Subir artefactos
         uses: actions/upload-artifact@v4
         with:
-          name: MoraDownloader-1.0.0.exe
-          path: dist/MoraDownloader-1.0.0.exe
+          name: MoraDownloader-windows
+          path: |
+            dist/MoraDownloader-1.0.0.exe
+            dist/MoraDownloader-Setup-1.0.0.exe
       - name: Crear Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/MoraDownloader-1.0.0.exe
+          files: |
+            dist/MoraDownloader-1.0.0.exe
+            dist/MoraDownloader-Setup-1.0.0.exe
           generate_release_notes: true

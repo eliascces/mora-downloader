@@ -2,7 +2,7 @@
 
 Descarga **MP3 y video (MP4)** de [YouTube](https://www.youtube.com), [Facebook](https://www.facebook.com) y cualquier otra plataforma soportada por [yt-dlp](https://github.com/yt-dlp/yt-dlp), vigilando el portapapeles.
 
-Copias un enlace, la app detecta el link y te deja elegir formato (audio o video + calidad) a través de una mini-ventana. Es una app de escritorio **Electron** con interfaz en **español e inglés**, empaquetada como **.exe portable** (no requiere instalación).
+Copias un enlace, la app detecta el link y te deja elegir formato (audio o video + calidad) a través de una mini-ventana. Es una app de escritorio **Electron** con interfaz en **español e inglés**, distribuida como **instalador** (arranque rápido) o **.exe portable** (no requiere instalación).
 
 ## Características
 
@@ -24,7 +24,7 @@ Ninguno: la app incluye `yt-dlp.exe`, `ffmpeg` y `ffprobe` empaquetados. Solo se
 
 ## Uso
 
-1. Descarga `MoraDownloader-1.0.0.exe` desde [Releases](https://github.com/eliascces/mora-downloader/releases).
+1. Descarga desde [Releases](https://github.com/eliascces/mora-downloader/releases): `MoraDownloader-Setup-1.0.0.exe` (instalador recomendado, arranque rápido) o `MoraDownloader-1.0.0.exe` (portable, sin instalación).
 2. Activa el toggle. Elige carpeta de destino si no quieres la predeterminada.
 3. Copia un enlace de un video (YouTube, Facebook, etc.).
 4. Elige formato y calidad; la descarga comienza sola.
@@ -37,7 +37,7 @@ npm run setup:binaries   # descarga yt-dlp + ffmpeg a assets/resources
 npm run icons            # genera iconos
 npm start                # ejecuta en desarrollo
 npm test                 # tests unitarios (node:test)
-npm run dist             # empaqueta el .exe portable en dist/
+npm run dist             # empaqueta portable + instalador NSIS en dist/
 ```
 
 Hay una prueba end-to-end real (descarga de verdad) con `node scripts/e2e.js`.

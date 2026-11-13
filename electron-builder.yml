@@ -17,6 +17,17 @@ win:
     - target: portable
       arch:
         - x64
+    - target: nsis
+      arch:
+        - x64
 portable:
   artifactName: "MoraDownloader-${version}.exe"
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Mora Downloader
+  artifactName: "MoraDownloader-Setup-${version}.exe"
 npmRebuild: false

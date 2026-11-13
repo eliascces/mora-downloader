@@ -12,7 +12,7 @@
     "setup:binaries": "powershell -ExecutionPolicy Bypass -File scripts/download-binaries.ps1",
     "icons": "node scripts/generate-icons.js",
     "test": "node --test \"src/tests/*.test.js\"",
-    "dist": "node scripts/generate-icons.js && electron-builder --win portable"
+    "dist": "node scripts/generate-icons.js && electron-builder --win"
   },
   "devDependencies": {
     "electron": "^43.4.0",
