@@ -16,7 +16,7 @@ $ffDest = Join-Path $env:TEMP 'ffmpeg-btbn-extract'
 if (Test-Path $ffDest) { Remove-Item $ffDest -Recurse -Force }
 Expand-Archive -Path $zip -DestinationPath $ffDest -Force
 $binDir = Get-ChildItem -Path $ffDest -Recurse -Directory -Filter 'bin' | Select-Object -First 1
-Get-ChildItem $binDir.FullName | Copy-Item -Destination $dest -Force
+Get-ChildItem $binDir.FullName | Where-Object { $_.Name -ne 'ffplay.exe' } | Copy-Item -Destination $dest -Force
 
 Write-Host '==> Descargando deno.exe (JavaScript runtime para yt-dlp EJS)...'
 $denoZip = Join-Path $env:TEMP 'deno-x86_64-pc-windows-msvc.zip'
