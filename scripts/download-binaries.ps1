@@ -2,6 +2,27 @@ $ErrorActionPreference = 'Stop'
 $dest = Join-Path $PSScriptRoot '..\assets\resources'
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
 
+# Expand-Archive -Force falla en Windows PowerShell 5.1 (overload de .NET
+# inexistente); extraemos entrada por entrada para funcionar en 5.1 y 7.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+function Expand-Zip($zip, $target) {
+  New-Item -ItemType Directory -Force -Path $target | Out-Null
+  $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
+  try {
+    foreach ($entry in $archive.Entries) {
+      $out = Join-Path $target $entry.FullName
+      if ($entry.Name -eq '') {
+        New-Item -ItemType Directory -Force -Path $out | Out-Null
+        continue
+      }
+      New-Item -ItemType Directory -Force -Path (Split-Path $out -Parent) | Out-Null
+      [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $out, $true)
+    }
+  } finally {
+    $archive.Dispose()
+  }
+}
+
 Write-Host '==> Descargando yt-dlp.exe (GitHub official)...'
 $ytUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 & curl.exe -L --fail --retry 3 -o (Join-Path $dest 'yt-dlp.exe') $ytUrl
@@ -14,7 +35,7 @@ if (Test-Path $zip) { Remove-Item $zip -Force }
 if ($LASTEXITCODE -ne 0) { throw 'Fallo al descargar ffmpeg (curl exit code ' + $LASTEXITCODE + ')' }
 $ffDest = Join-Path $env:TEMP 'ffmpeg-btbn-extract'
 if (Test-Path $ffDest) { Remove-Item $ffDest -Recurse -Force }
-Expand-Archive -Path $zip -DestinationPath $ffDest -Force
+Expand-Zip $zip $ffDest
 $binDir = Get-ChildItem -Path $ffDest -Recurse -Directory -Filter 'bin' | Select-Object -First 1
 Get-ChildItem $binDir.FullName | Where-Object { $_.Name -ne 'ffplay.exe' } | Copy-Item -Destination $dest -Force
 
@@ -25,7 +46,7 @@ if (Test-Path $denoZip) { Remove-Item $denoZip -Force }
 if ($LASTEXITCODE -ne 0) { throw 'Fallo al descargar deno (curl exit code ' + $LASTEXITCODE + ')' }
 $denoDest = Join-Path $env:TEMP 'deno-extract'
 if (Test-Path $denoDest) { Remove-Item $denoDest -Recurse -Force }
-Expand-Archive -Path $denoZip -DestinationPath $denoDest -Force
+Expand-Zip $denoZip $denoDest
 Copy-Item (Join-Path $denoDest 'deno.exe') -Destination $dest -Force
 
 Write-Host '==> Binarios listos en assets/resources:'
