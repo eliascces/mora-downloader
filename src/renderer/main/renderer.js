@@ -212,7 +212,7 @@ function renderToast(id) {
   const ring = el.querySelector('.toast-ring');
   const status = d.status;
   if (status === 'done' || status === 'exists' || status === 'error') {
-    ring.innerHTML = `<svg viewBox="0 0 512 512" width="24" height="24">${status === 'error' ? '<circle cx="256" cy="256" r="200" fill="rgba(248,113,113,.2)"/><path d="M176 176 L336 336 M336 176 L176 336" stroke="#f87171" stroke-width="44" stroke-linecap="round"/>' : '<circle cx="256" cy="256" r="200" fill="rgba(52,211,153,.18)"/><path d="M170 262 l60 60 120-132" stroke="#34d399" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'}</svg>`;
+    ring.innerHTML = `<svg viewBox="0 0 512 512" width="24" height="24">${status === 'error' ? '<circle cx="256" cy="256" r="200" style="fill:color-mix(in srgb, var(--red) 20%, transparent)"/><path d="M176 176 L336 336 M336 176 L176 336" style="stroke:var(--red)" stroke-width="44" stroke-linecap="round"/>' : '<circle cx="256" cy="256" r="200" style="fill:color-mix(in srgb, var(--green) 20%, transparent)"/><path d="M170 262 l60 60 120-132" style="stroke:var(--green)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'}</svg>`;
   } else {
     ring.innerHTML = ringSVG(d.pct || 0) + `<span class="toast-logo">${toastLogo()}</span>`;
   }
@@ -252,7 +252,7 @@ function showInfoToast(key, params, timeout = 6000) {
   const el = state.toasts[id];
   const sub = el.querySelector('.toast-sub');
   sub.textContent = t(key, params);
-  el.querySelector('.toast-ring').innerHTML = `<svg viewBox="0 0 512 512" width="22" height="22"><circle cx="256" cy="256" r="210" fill="rgba(139,92,246,.2)"/><path d="M256 176 v120 M256 336 v8" stroke="#8b5cf6" stroke-width="34" stroke-linecap="round"/></svg>`;
+  el.querySelector('.toast-ring').innerHTML = `<svg viewBox="0 0 512 512" width="22" height="22"><circle cx="256" cy="256" r="210" style="fill:color-mix(in srgb, var(--accent2) 20%, transparent)"/><path d="M256 176 v120 M256 336 v8" style="stroke:var(--accent2)" stroke-width="34" stroke-linecap="round"/></svg>`;
   el.querySelector('.toast-title').textContent = 'Mora Downloader';
   el.classList.add('toast-info');
   if (timeout) setTimeout(() => dismissToast(id), timeout);

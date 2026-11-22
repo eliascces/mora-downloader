@@ -1,0 +1,84 @@
+/* Mora - tokens compartidos (main, mini, player) */
+:root {
+  /* Superficies: ciruela de mora */
+  --bg: #150e1e;
+  --bg-soft: #1d1327;
+  --card: #261833;
+  --card-border: #3a2850;
+
+  /* Texto */
+  --text: #f4eef8;
+  --muted: #b0a1c0;
+
+  /* Acento: violeta a pulpa de mora */
+  --accent1: #7c3aed;
+  --accent2: #c0268a;
+  --accent-soft: #e879c9;
+  --accent-gradient: linear-gradient(135deg, var(--accent1), var(--accent2));
+
+  /* Estados */
+  --green: #34d399;
+  --red: #fb7185;
+  --gold: #fbbf24;
+
+  --radius: 14px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent2) 55%, transparent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+input[type="range"] {
+  accent-color: var(--accent2);
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  background: var(--bg-soft);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+}
+input[type="checkbox"]::before {
+  content: "";
+  width: 8px;
+  height: 4px;
+  margin-top: -2px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) scale(0);
+  transition: transform .12s ease;
+}
+input[type="checkbox"]:checked {
+  background: var(--accent-gradient);
+  border-color: transparent;
+}
+input[type="checkbox"]:checked::before {
+  transform: rotate(-45deg) scale(1);
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+button {
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease, filter .15s ease;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #46315f; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #5a3f78; }
+::-webkit-scrollbar-track { background: transparent; }
