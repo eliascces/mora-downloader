@@ -24,14 +24,15 @@ function fmtDuration(sec) {
 }
 
 function fileUrl(p) {
-  return 'file:///' + String(p).split('\\').join('/');
+  const parts = String(p).replace(/\\/g, '/').split('/');
+  return 'file:///' + parts.map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg))).join('/');
 }
 
 function play() {
   const item = state.items[state.index];
   if (!item) return;
   els.empty.style.display = 'none';
-  els.video.src = fileUrl(item.path);
+  els.video.src = item.url || fileUrl(item.path);
   els.video.play().catch(() => {});
   els.nowName.textContent = item.name;
   renderQueue();

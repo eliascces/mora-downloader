@@ -51,6 +51,14 @@ test('mapError: login required', () => {
   assert.equal(err.code, 'LOGIN');
 });
 
+test('mapError: TikTok pide login para contenido sensible', () => {
+  const err = mapError(
+    'ERROR: [TikTok] 7704482874849840391: This post may not be comfortable for some audiences. Log in for access.',
+    1,
+  );
+  assert.equal(err.code, 'LOGIN');
+});
+
 test('mapError: ya descargado', () => {
   const err = mapError('[download] title.mp4 has already been downloaded', 0);
   assert.equal(err.code, 'EXISTS');

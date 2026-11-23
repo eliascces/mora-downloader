@@ -11,6 +11,7 @@ const { pathToFileURL } = require('url');
 const { Settings } = require('./settings');
 const ClipboardWatcher = require('./clipboard');
 const { Downloader, resourcePath } = require('./downloader');
+const tiktokPhoto = require('./tiktok-photo');
 const DownloadQueue = require('./queue');
 const { LibraryStore } = require('./library');
 const { checkUpdate, checkAppUpdate } = require('./updater');
@@ -54,6 +55,12 @@ function main() {
     for (const w of BrowserWindow.getAllWindows()) {
       if (!w.isDestroyed()) w.webContents.send(channel, payload);
     }
+  }
+
+  function withUrls(items) {
+    return (items || []).map((item) => (
+      item && item.path ? { ...item, url: pathToFileURL(item.path).href } : item
+    ));
   }
 
   function ensureDirs() {
@@ -113,31 +120,77 @@ function main() {
     const platform = getPlatform(url);
     broadcast('toast', { kind: 'started', id, url, format: fmt, platform, playlist: !!playlist });
 
-    const titlePromise = downloader.getTitle(url).then((t) => {
-      broadcast('toast', { kind: 'title', id, title: t });
-      return t;
-    }).catch(() => '');
+    const photoUrl = tiktokPhoto.isTikTokPhotoUrl(url);
+    const outputDir = fmt === 'video' ? path.join(dest, 'Videos') : path.join(dest, 'MP3');
+    let photoTitle = '';
+
+    const titlePromise = photoUrl
+      ? Promise.resolve('')
+      : downloader.getTitle(url).then((t) => {
+        broadcast('toast', { kind: 'title', id, title: t });
+        return t;
+      }).catch(() => '');
+
+    const runPhoto = () => tiktokPhoto.downloadPhotoPost({
+      url,
+      format: fmt,
+      outputDir,
+      ffmpegPath: downloader.ffmpegPath,
+      cookiesFile: settings.get('cookieFile'),
+      onTitle: (title) => {
+        photoTitle = title;
+        broadcast('toast', { kind: 'title', id, title });
+      },
+      onProgress: (p) => broadcast('toast', {
+        kind: 'progress', id, pct: p.pct, speed: p.speed, eta: p.eta,
+      }),
+    });
+
+    const runYtDlp = () => downloader.download({
+      url,
+      format: fmt,
+      quality: q,
+      playlist: !!playlist,
+      outputDir,
+      onProgress: (p) => broadcast('toast', {
+        kind: 'progress', id, pct: p.pct, speed: p.speed, eta: p.eta,
+      }),
+    });
 
     const job = {
       id,
       url,
       format: fmt,
       playlist: !!playlist,
-      run: () => runWithRetry(() => downloader.download({
-        url,
-        format: fmt,
-        quality: q,
-        playlist: !!playlist,
-        outputDir: fmt === 'video' ? path.join(dest, 'Videos') : path.join(dest, 'MP3'),
-        onProgress: (p) => broadcast('toast', { kind: 'progress', id, pct: p.pct, speed: p.speed, eta: p.eta }),
-      })),
-      cancel: () => downloader.cancel(),
+      run: async () => {
+        if (photoUrl) {
+          const res = await runWithRetry(runPhoto);
+          if (res) return res;
+          throw Object.assign(
+            new Error('La publicación de TikTok no tiene imágenes disponibles'),
+            { code: 'UNSUPPORTED' },
+          );
+        }
+        try {
+          return await runWithRetry(runYtDlp);
+        } catch (err) {
+          const retryable = ['UNSUPPORTED', 'FORMAT', 'NOVIEW', 'ERROR'];
+          if (!tiktokPhoto.isTikTokUrl(url) || !retryable.includes(err && err.code)) throw err;
+          const res = await runPhoto();
+          if (res) return res;
+          throw err;
+        }
+      },
+      cancel: () => {
+        downloader.cancel();
+        tiktokPhoto.cancel();
+      },
     };
 
     try {
       const res = await queue.add(job);
-      const file = findOutputFile(dest, fmt);
-      const title = await titlePromise;
+      const file = (res && res.file) || findOutputFile(dest, fmt);
+      const title = photoTitle || (await titlePromise);
       if (res && res.skipped) {
         broadcast('toast', { kind: 'exists', id, url, file });
       } else {
@@ -146,7 +199,7 @@ function main() {
       }
       library.addHistory({ url, platform, format: fmt, path: file, status: res && res.skipped ? 'exists' : 'ok' });
       const items = library.scan(dest);
-      broadcast('library:updated', items);
+      broadcast('library:updated', withUrls(items));
     } catch (err) {
       sessionKeys.delete(key);
       const code = (err && err.code) || 'ERROR';
@@ -233,8 +286,13 @@ function main() {
         lastFormat: settings.get('downloadFormat'),
         language: settings.get('language'),
       });
-      downloader.getTitle(data.url).then((t) => {
-        if (miniWin && !miniWin.isDestroyed() && miniCurrent === data) {
+      const titlePromise = tiktokPhoto.isTikTokPhotoUrl(data.url)
+        ? tiktokPhoto.fetchPhotoPost(data.url, { cookiesFile: settings.get('cookieFile') })
+          .then((post) => (post && post.title) || null)
+          .catch(() => null)
+        : downloader.getTitle(data.url);
+      titlePromise.then((t) => {
+        if (miniWin && !miniWin.isDestroyed() && miniCurrent === data && t) {
           miniWin.webContents.send('mini:title', t);
         }
       });
@@ -246,8 +304,9 @@ function main() {
   }
 
   function openPlayerWindow(items, startId) {
+    const list = withUrls(items);
     if (playerWin && !playerWin.isDestroyed()) {
-      playerWin.webContents.send('player:list', { items, startId });
+      playerWin.webContents.send('player:list', { items: list, startId });
       playerWin.show();
       playerWin.focus();
       return;
@@ -264,7 +323,7 @@ function main() {
     });
     playerWin.loadFile(path.join(__dirname, '..', 'renderer', 'player', 'player.html'));
     playerWin.webContents.on('did-finish-load', () => {
-      playerWin.webContents.send('player:list', { items, startId });
+      playerWin.webContents.send('player:list', { items: list, startId });
     });
     playerWin.on('closed', () => { playerWin = null; });
   }
@@ -346,8 +405,8 @@ function main() {
     ipcMain.handle('folder:current', () => settings.destination());
     ipcMain.handle('space:check', () => library.freeSpace(ensureDirs()));
 
-    ipcMain.handle('library:scan', () => library.scan(settings.destination()));
-    ipcMain.handle('library:favorites', () => library.getFavorites());
+    ipcMain.handle('library:scan', () => withUrls(library.scan(settings.destination())));
+    ipcMain.handle('library:favorites', () => withUrls(library.getFavorites()));
     ipcMain.handle('library:favorite-toggle', (_e, id) => {
       const fav = library.toggleFavorite(id);
       return { id, fav };

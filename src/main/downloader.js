@@ -133,7 +133,7 @@ function mapError(buffer, code) {
   if (/unsupported url|is not a valid url|unable to extract/i.test(lower)) ecode = 'UNSUPPORTED';
   else if (/private video/i.test(lower)) ecode = 'PRIVATE';
   else if (/age[- ]restricted|confirm your age/i.test(lower)) ecode = 'AGE';
-  else if (/login required|sign in/i.test(lower)) ecode = 'LOGIN';
+  else if (/login required|sign in|log in for access|log in to|may not be comfortable/i.test(lower)) ecode = 'LOGIN';
   else if (/no such file|spawn/i.test(lower)) ecode = 'SPAWN';
   else if (/already been downloaded|has already been downloaded/i.test(lower)) ecode = 'EXISTS';
   else if (/requested format is not available|format not available/i.test(lower)) ecode = 'FORMAT';

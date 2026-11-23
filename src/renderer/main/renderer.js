@@ -653,6 +653,11 @@ els.btnPlayPl.addEventListener('click', async () => {
 
 // ---- Reproductor (audio inline + video en ventana) ----
 
+function toFileUrl(p) {
+  const parts = String(p).replace(/\\/g, '/').split('/');
+  return 'file:///' + parts.map((seg, i) => (i === 0 ? seg : encodeURIComponent(seg))).join('/');
+}
+
 function playFrom(items, startId) {
   const list = items || [];
   if (!list.length) return;
@@ -674,7 +679,7 @@ function playFrom(items, startId) {
 function playAudio() {
   const item = state.playQueue[state.playIndex];
   if (!item) return;
-  els.audio.src = 'file:///' + item.path.split('\\').join('/');
+  els.audio.src = item.url || toFileUrl(item.path);
   els.audio.play().catch(() => {});
   els.miniPlayer.classList.remove('hidden');
   els.mpName.textContent = item.name;
